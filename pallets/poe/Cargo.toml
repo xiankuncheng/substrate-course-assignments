@@ -42,6 +42,12 @@ default-features = false
 features = ['derive']
 version = '1.0'
 
+[dependencies.sp-std]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'devhub/latest'
+version = '4.0.0-dev'
+
 [dev-dependencies.sp-core]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
@@ -72,6 +78,7 @@ runtime-benchmarks = ['frame-benchmarking']
 std = [
     'codec/std',
     'scale-info/std',
+		'sp-std/std',
     'frame-support/std',
     'frame-system/std',
     'frame-benchmarking/std',
