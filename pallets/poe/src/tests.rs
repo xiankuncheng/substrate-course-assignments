@@ -14,6 +14,18 @@ fn create_claim_works() {
 }
 
 #[test]
+fn create_claim_failed_when_claim_is_too_long() {
+	new_test_ext().execute_with(|| {
+		let claim = vec![0, 1, 2];
+
+		assert_noop!(
+			PoeModule::create_claim(Origin::signed(1), claim.clone()),
+			Error::<Test>::ClaimOverflow
+		);
+	})
+}
+
+#[test]
 fn create_claim_failed_when_claim_already_exist() {
 	new_test_ext().execute_with(|| {
 		let claim = vec![0, 1];
@@ -34,6 +46,18 @@ fn revoke_claim_works() {
 
 		assert_ok!(PoeModule::revoke_claim(Origin::signed(1), claim.clone()));
 		assert_eq!(Proofs::<Test>::get(&claim), None);
+	})
+}
+
+#[test]
+fn revoke_claim_failed_when_claim_is_too_long() {
+	new_test_ext().execute_with(|| {
+		let claim = vec![0, 1, 2];
+
+		assert_noop!(
+			PoeModule::revoke_claim(Origin::signed(1), claim.clone()),
+			Error::<Test>::ClaimOverflow
+		);
 	})
 }
 
@@ -75,6 +99,18 @@ fn transfer_claim_works() {
 			Proofs::<Test>::get(&claim),
 			Some((2, <frame_system::Pallet<Test>>::block_number()))
 		)
+	})
+}
+
+#[test]
+fn transfer_claim_failed_when_claim_is_too_long() {
+	new_test_ext().execute_with(|| {
+		let claim = vec![0, 1, 2];
+
+		assert_noop!(
+			PoeModule::transfer_claim(Origin::signed(1), claim.clone(), 2),
+			Error::<Test>::ClaimOverflow
+		);
 	})
 }
 
