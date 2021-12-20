@@ -78,7 +78,11 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(0)]
-		pub fn transfer_claim(origin: OriginFor<T>, claim: Vec<u8>) -> DispatchResult {
+		pub fn transfer_claim(
+			origin: OriginFor<T>,
+			claim: Vec<u8>,
+			dest: T::AccountId,
+		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			let (owner, _) = Proofs::<T>::get(&claim).ok_or(Error::<T>::ClaimNotExist)?;
@@ -87,7 +91,7 @@ pub mod pallet {
 
 			let block_number = <frame_system::Pallet<T>>::block_number();
 
-			Proofs::<T>::insert(&claim, (&sender, block_number));
+			Proofs::<T>::insert(&claim, (&dest, block_number));
 
 			Ok(())
 		}
