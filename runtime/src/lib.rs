@@ -274,9 +274,14 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
+parameter_types! {
+	pub const MaxClaimLength: u8 = 10;
+}
+
 /// Configure the pallet-poe in pallets/poe.
 impl pallet_poe::Config for Runtime {
 	type Event = Event;
+	type MaxClaimLength = MaxClaimLength;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

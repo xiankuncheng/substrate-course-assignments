@@ -18,6 +18,9 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		#[pallet::constant]
+		type MaxClaimLength: Get<u8>;
 	}
 
 	#[pallet::pallet]
@@ -43,12 +46,15 @@ pub mod pallet {
 		ProofAlreadyExist,
 		ClaimNotExist,
 		NotClaimOwner,
+		ClaimOverflow,
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(0)]
 		pub fn create_claim(origin: OriginFor<T>, claim: Vec<u8>) -> DispatchResult {
+			ensure!((claim.len() as u8) < T::MaxClaimLength::get(), Error::<T>::ClaimOverflow);
+
 			let sender = ensure_signed(origin)?;
 
 			ensure!(!Proofs::<T>::contains_key(&claim), Error::<T>::ProofAlreadyExist);
@@ -64,6 +70,8 @@ pub mod pallet {
 
 		#[pallet::weight(0)]
 		pub fn revoke_claim(origin: OriginFor<T>, claim: Vec<u8>) -> DispatchResult {
+			ensure!((claim.len() as u8) < T::MaxClaimLength::get(), Error::<T>::ClaimOverflow);
+
 			let sender = ensure_signed(origin)?;
 
 			let (owner, _) = Proofs::<T>::get(&claim).ok_or(Error::<T>::ClaimNotExist)?;
@@ -83,6 +91,8 @@ pub mod pallet {
 			claim: Vec<u8>,
 			dest: T::AccountId,
 		) -> DispatchResult {
+			ensure!((claim.len() as u8) < T::MaxClaimLength::get(), Error::<T>::ClaimOverflow);
+
 			let sender = ensure_signed(origin)?;
 
 			let (owner, _) = Proofs::<T>::get(&claim).ok_or(Error::<T>::ClaimNotExist)?;
