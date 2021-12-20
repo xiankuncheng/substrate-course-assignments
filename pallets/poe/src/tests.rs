@@ -14,6 +14,15 @@ fn create_claim_works() {
 }
 
 #[test]
+#[ignore]
+fn create_claim_falied_with_bad_origin() {
+	assert_noop!(
+		PoeModule::create_claim(Origin::root(), "un".to_string().as_bytes().to_vec()),
+		frame_support::error::BadOrigin
+	);
+}
+
+#[test]
 fn create_claim_failed_when_claim_is_too_long() {
 	new_test_ext().execute_with(|| {
 		let limit_size = MaxClaimLength::get() as usize;
