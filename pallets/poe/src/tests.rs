@@ -14,12 +14,24 @@ fn create_claim_works() {
 }
 
 #[test]
+#[ignore]
+fn create_claim_falied_with_bad_origin() {
+	assert_noop!(
+		PoeModule::create_claim(Origin::root(), "un".to_string().as_bytes().to_vec()),
+		frame_support::error::BadOrigin
+	);
+}
+
+#[test]
 fn create_claim_failed_when_claim_is_too_long() {
 	new_test_ext().execute_with(|| {
-		let claim = vec![0, 1, 2];
+		let limit_size = MaxClaimLength::get() as usize;
 
 		assert_noop!(
-			PoeModule::create_claim(Origin::signed(1), claim.clone()),
+			PoeModule::create_claim(
+				Origin::signed(1),
+				vec![0u8; limit_size.checked_add(1).unwrap()]
+			),
 			Error::<Test>::ClaimOverflow
 		);
 	})
@@ -52,10 +64,13 @@ fn revoke_claim_works() {
 #[test]
 fn revoke_claim_failed_when_claim_is_too_long() {
 	new_test_ext().execute_with(|| {
-		let claim = vec![0, 1, 2];
+		let limit_size = MaxClaimLength::get() as usize;
 
 		assert_noop!(
-			PoeModule::revoke_claim(Origin::signed(1), claim.clone()),
+			PoeModule::revoke_claim(
+				Origin::signed(1),
+				vec![0u8; limit_size.checked_add(1).unwrap()]
+			),
 			Error::<Test>::ClaimOverflow
 		);
 	})
@@ -105,10 +120,14 @@ fn transfer_claim_works() {
 #[test]
 fn transfer_claim_failed_when_claim_is_too_long() {
 	new_test_ext().execute_with(|| {
-		let claim = vec![0, 1, 2];
+		let limit_size = MaxClaimLength::get() as usize;
 
 		assert_noop!(
-			PoeModule::transfer_claim(Origin::signed(1), claim.clone(), 2),
+			PoeModule::transfer_claim(
+				Origin::signed(1),
+				vec![0u8; limit_size.checked_add(1).unwrap()],
+				2
+			),
 			Error::<Test>::ClaimOverflow
 		);
 	})
