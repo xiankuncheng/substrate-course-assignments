@@ -30,13 +30,15 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
 		type Currency: ReservableCurrency<Self::AccountId>;
+		#[pallet::constant]
+		type MaxKittyIndexLength: Get<u32>;
 	}
 
 	type KittyIndex = u32;
 	type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-	#[derive(Encode, Decode, TypeInfo)]
+	#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
 	#[scale_info(skip_type_params(T))]
 	pub struct Kitty<T: Config> {
 		dna: [u8; 16],
@@ -86,6 +88,8 @@ pub mod pallet {
 
 			let kitty_id =
 				Self::kitties_count().checked_add(1).ok_or(Error::<T>::KittiesCountOverflow)?;
+
+			ensure!(kitty_id.lt(&T::MaxKittyIndexLength::get()), Error::<T>::KittiesCountOverflow);
 			let dna = Self::random_value(&who);
 
 			ensure!(T::Currency::can_reserve(&who, price), Error::<T>::NotEnoughBalance);
@@ -106,11 +110,14 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
+			let kitty = Kitties::<T>::get(kitty_id).ok_or(Error::<T>::InvalidKittyIndex)?;
 			let kitty_host = Owner::<T>::get(kitty_id).ok_or(Error::<T>::NotOwner)?;
 			ensure!(kitty_host == who, Error::<T>::NotOwner);
 
-			let kitty = Kitties::<T>::get(kitty_id).ok_or(Error::<T>::InvalidKittyIndex)?;
-			ensure!(T::Currency::can_reserve(&who, kitty.price), Error::<T>::NotEnoughBalance);
+			ensure!(
+				T::Currency::can_reserve(&new_owner, kitty.price),
+				Error::<T>::NotEnoughBalance
+			);
 			T::Currency::unreserve(&who, kitty.price);
 			T::Currency::reserve(&new_owner, kitty.price)?;
 			Owner::<T>::insert(kitty_id, Some(new_owner.clone()));
@@ -137,12 +144,14 @@ pub mod pallet {
 			let kitty2 = Self::kitties(kitty_id2).ok_or(Error::<T>::InvalidKittyIndex)?;
 
 			// kitties belong to owner
-			Owner::<T>::get(kitty_id1).ok_or(Error::<T>::NotOwner)?;
-			Owner::<T>::get(kitty_id2).ok_or(Error::<T>::NotOwner)?;
+			ensure!(Owner::<T>::get(kitty_id1) == Some(who.clone()), Error::<T>::NotOwner);
+			ensure!(Owner::<T>::get(kitty_id2) == Some(who.clone()), Error::<T>::NotOwner);
 
 			// get kitty id
 			let kitty_id =
 				Self::kitties_count().checked_add(1).ok_or(Error::<T>::KittiesCountOverflow)?;
+
+			ensure!(kitty_id.lt(&T::MaxKittyIndexLength::get()), Error::<T>::KittiesCountOverflow);
 
 			// dna generate
 			let dna_1 = kitty1.dna;
@@ -173,10 +182,10 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
+			let kitty = Kitties::<T>::get(kitty_id).ok_or(Error::<T>::InvalidKittyIndex)?;
 			let kitty_host = Owner::<T>::get(kitty_id).ok_or(Error::<T>::NotOwner)?;
 			ensure!(kitty_host == from, Error::<T>::NotOwner);
 
-			let kitty = Kitties::<T>::get(kitty_id).ok_or(Error::<T>::InvalidKittyIndex)?;
 			ensure!(T::Currency::can_reserve(&who, kitty.price), Error::<T>::NotEnoughBalance);
 			T::Currency::unreserve(&from, kitty.price);
 			T::Currency::transfer(&from, &who, kitty.price, ExistenceRequirement::KeepAlive)?;
@@ -196,11 +205,11 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
+			let kitty = Kitties::<T>::get(kitty_id).ok_or(Error::<T>::InvalidKittyIndex)?;
 			let kitty_host = Owner::<T>::get(kitty_id).ok_or(Error::<T>::NotOwner)?;
 			ensure!(kitty_host == who, Error::<T>::NotOwner);
 
-			let kitty = Kitties::<T>::get(kitty_id).ok_or(Error::<T>::InvalidKittyIndex)?;
-			ensure!(T::Currency::can_reserve(&who, kitty.price), Error::<T>::NotEnoughBalance);
+			ensure!(T::Currency::can_reserve(&dest, kitty.price), Error::<T>::NotEnoughBalance);
 			T::Currency::unreserve(&who, kitty.price);
 			T::Currency::transfer(&who, &dest, kitty.price, ExistenceRequirement::KeepAlive)?;
 
