@@ -10,34 +10,57 @@ export default function Kitties(props) {
   const { api, keyring } = useSubstrate();
   const { accountPair } = props;
 
+  const [kittyIndexes, setKittyIndexes] = useState([]);
   const [kitties, setKitties] = useState([]);
   const [status, setStatus] = useState("");
 
-  const fetchKitties = () => {
+  useEffect(() => {
     let unsub = null;
-    const asyncFetch = async () => {
-      unsub = await api.query.kittiesModule.kitties.entries(
-        async (kittyEntries) => {
-          const kittiess = await Promise.all(
-            kittyEntries.map(async ([id, dna], idx) => {
-              const owner = await api.query.kittiesModule.owner(idx);
-              return { id: idx, dna: dna.value, owner: owner.value.toJSON() };
-            })
-          );
 
-          setKitties(kittiess);
+    const fetchKittyIndexes = async () => {
+      unsub = await api.query.kittiesModule.kittiesCount(async (count) => {
+        const kittyIndex = count.value.toJSON();
+        if (kittyIndex <= 0) {
+          return;
         }
-      );
+        setKittyIndexes(Array.from(Array(kittyIndex).keys()));
+      });
     };
 
-    asyncFetch();
+    fetchKittyIndexes();
 
     return () => {
       unsub && unsub();
     };
-  };
+  }, [api, keyring, setKitties]);
 
-  useEffect(fetchKitties, [api, keyring]);
+  useEffect(() => {
+    let unsub = null;
+
+    const fetchKitties = async () => {
+      unsub = await api.query.kittiesModule.owner.multi(
+        kittyIndexes,
+        async (owners) => {
+          const kittyDNAs = await api.query.kittiesModule.kitties.multi(
+            kittyIndexes
+          );
+          const kitties = kittyIndexes.map((kittyIndex) => ({
+            id: kittyIndex,
+            dna: kittyDNAs[kittyIndex].value,
+            owner: owners[kittyIndex].value.toJSON(),
+          }));
+
+          setKitties(kitties);
+        }
+      );
+    };
+
+    fetchKitties();
+
+    return () => {
+      unsub && unsub();
+    };
+  }, [api, keyring, kittyIndexes]);
 
   return (
     <Grid.Column width={16}>
