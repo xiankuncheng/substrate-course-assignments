@@ -72,14 +72,18 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const MaxKittyIndex: u32 = 4;
-}
 impl pallet_kitties::Config for Test {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
-	type MaxKittyIndexLength = MaxKittyIndex;
+	type KittyIndex = u32;
+}
+
+#[macro_export]
+macro_rules! assert_has_event {
+	($x:expr) => {
+		System::assert_has_event(TestEvent::KittiesModule($x))
+	};
 }
 
 impl pallet_randomness_collective_flip::Config for Test {}

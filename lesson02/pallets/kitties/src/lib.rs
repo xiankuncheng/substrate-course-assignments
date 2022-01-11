@@ -246,7 +246,7 @@ pub mod pallet {
 			let kitty = Kitty::<T> { dna, price };
 			Kitties::<T>::insert(kitty_id, kitty);
 			Owner::<T>::insert(kitty_id, Some(who.clone()));
-			KittiesCount::<T>::put(kitty_id);
+			KittiesCount::<T>::put(kitty_id + 1u32.into());
 		}
 	}
 }
