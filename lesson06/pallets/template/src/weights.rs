@@ -81,11 +81,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	
 	// Storage: TemplateModule Something (r:0 w:1)
 	
-	fn do_something(s: u32, ) -> Weight {
-		(7_994_000 as Weight)
-			
-			// Standard Error: 0
-			.saturating_add((1_000 as Weight).saturating_mul(s as Weight))
+	fn do_something(_s: u32, ) -> Weight {
+		(8_045_000 as Weight)
 			
 			
 			
@@ -103,11 +100,8 @@ impl WeightInfo for () {
 	
 	// Storage: TemplateModule Something (r:0 w:1)
 	
-	fn do_something(s: u32, ) -> Weight {
-		(7_994_000 as Weight)
-			
-			// Standard Error: 0
-			.saturating_add((1_000 as Weight).saturating_mul(s as Weight))
+	fn do_something(_s: u32, ) -> Weight {
+		(8_045_000 as Weight)
 			
 			
 			
